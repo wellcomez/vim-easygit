@@ -746,18 +746,22 @@ function M.add(...)
   local files = {...}
   local root = M.smart_root()
   if vim.fn.empty(root) == 1 then
+    vim.api.nvim_echo({{"Not in a git repository", "ErrorMsg"}}, false, {})
     return
   end
   local cwd = vim.fn.getcwd()
   vim.cmd("lcd " .. vim.fn.fnameescape(root))
   local args
   if #files == 0 then
-    args = vim.fn.expand("%")
+    args = vim.fn.shellescape(vim.fn.expand("%:p"))
   else
     args = table.concat(vim.tbl_map(function(x) return vim.fn.shellescape(x) end, files), " ")
   end
   local command = "git add " .. args
-  M._system(command)
+  local result = M._system(command)
+  if result ~= "" then
+    vim.api.nvim_echo({{"Added files: " .. args, "MoreMsg"}}, false, {})
+  end
   M._reset_gutter(vim.fn.bufnr("%"))
   vim.cmd("lcd " .. vim.fn.fnameescape(cwd))
 end
